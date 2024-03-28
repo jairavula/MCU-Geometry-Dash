@@ -24,11 +24,24 @@ struct _Application {
 struct _Gamesettings {
     _screenState screenState;
 
+    bool loadTitleScreen;
+    bool loadInstructionsScreen;
+    bool loadHighScoresScreen;
+    bool loadGameScreen;
 
+
+};
+
+struct _Rectangle{
+    int r11;
+    int r12;
+    int r21;
+    int r22;
 };
 
 typedef struct _Gamesettings Gamesettings;
 typedef struct _Application Application;
+typedef struct _Rectangle Rectangle;
 
 // Called only a single time - inside of main(), where the application is
 // constructed

@@ -16,6 +16,15 @@ struct _Joystick {
 
     uint_fast16_t x;
     uint_fast16_t y;
+    bool isTappedToLeft;
+    bool isTappedToRight;
+    bool isTappedToTop;
+    bool isTappedToBottom;
+
+    bool isPressedToLeft;
+    bool isPressedToRight;
+    bool isPressedToTop;
+    bool isPressedToBottom;
 
 
 };

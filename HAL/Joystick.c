@@ -108,8 +108,6 @@ Joystick Joystick_construct() {
     initJoyStick();
     startADC();
 
-
-
     // Initialize all buffered outputs of the Joystick
     // Joystick.pushState = RELEASED;
     // Joystick.isTapped = false;
@@ -121,6 +119,18 @@ Joystick Joystick_construct() {
 void Joystick_refresh(Joystick* joystick_p){
     joystick_p->x = ADC14_getResult(ADC_MEM0);
     joystick_p->y = ADC14_getResult(ADC_MEM1);
+
+    joystick_p->isTappedToLeft = Joystick_isTappedToLeft(joystick_p);
+    joystick_p->isTappedToRight = Joystick_isTappedToRight(joystick_p);
+    joystick_p->isTappedToTop = Joystick_isTappedToTop(joystick_p);
+    joystick_p->isTappedToBottom = Joystick_isTappedToBottom(joystick_p);
+
+    joystick_p->isPressedToLeft = Joystick_isPressedtoLeft(joystick_p);
+    joystick_p->isPressedToRight = Joystick_isPressedtoRight(joystick_p);
+
+
+
+
 }
 
 bool Joystick_isPressedtoLeft(Joystick* joystick_p){
@@ -130,14 +140,14 @@ bool Joystick_isPressedtoRight(Joystick* joystick_p){
     return (joystick_p->x > RIGHT_THRESHHOLD);
 }
 bool Joystick_isPressedtoTop(Joystick* joystick_p){
-    return (joystick_p->x > TOP_THRESHHOLD);
+    return (joystick_p->y > TOP_THRESHHOLD);
 }
 bool Joystick_isPressedtoBottom(Joystick* joystick_p){
-    return (joystick_p->x < BOTTOM_THRESHHOLD);
+    return (joystick_p->y < BOTTOM_THRESHHOLD);
 }
 bool Joystick_isTappedToLeft(Joystick* joystick_p){
     static JoystickDebounceStateLeft state = NOT_LEFT;
-            bool output = false;
+    bool output = false;
 
     switch(state) {
     case NOT_LEFT:
@@ -146,20 +156,20 @@ bool Joystick_isTappedToLeft(Joystick* joystick_p){
             output = true;
         }
         break;
-           case LEFT:
-               if (joystick_p->x > LEFT_THRESHHOLD){
-                   state = NOT_LEFT;
-                   output = false;
-               }
-break;
+    case LEFT:
+        if (joystick_p->x > LEFT_THRESHHOLD){
+            state = NOT_LEFT;
+            output = false;
+        }
+        break;
     }
 
-        return output;
+    return output;
 }
 
 bool Joystick_isTappedToRight(Joystick* joystick_p){
     static JoystickDebounceStateRight state = NOT_RIGHT;
-            bool output = false;
+    bool output = false;
 
     switch(state) {
     case NOT_RIGHT:
@@ -168,59 +178,59 @@ bool Joystick_isTappedToRight(Joystick* joystick_p){
             output = true;
         }
         break;
-           case RIGHT:
-               if (joystick_p->x < ROGHT_THRESHHOLD){
-                   state = NOT_RIGHT;
-                   output = false;
-               }
-break;
+    case RIGHT:
+        if (joystick_p->x < RIGHT_THRESHHOLD){
+            state = NOT_RIGHT;
+            output = false;
+        }
+        break;
     }
 
-        return output;
+    return output;
 }
 
 bool Joystick_isTappedToTop(Joystick* joystick_p){
     static JoystickDebounceStateTop state = NOT_TOP;
-            bool output = false;
+    bool output = false;
 
     switch(state) {
     case NOT_TOP:
-        if (joystick_p->x > TOP_THRESHHOLD){
+        if (joystick_p->y > TOP_THRESHHOLD){
             state = TOP;
             output = true;
         }
         break;
-           case TOP:
-               if (joystick_p->x < TOP_THRESHHOLD){
-                   state = NOT_TOP;
-                   output = false;
-               }
-break;
+    case TOP:
+        if (joystick_p->y < TOP_THRESHHOLD){
+            state = NOT_TOP;
+            output = false;
+        }
+        break;
     }
 
-        return output;
+    return output;
 }
 
 bool Joystick_isTappedToBottom(Joystick* joystick_p){
     static JoystickDebounceStateBottom state = NOT_BOTTOM;
-            bool output = false;
+    bool output = false;
 
     switch(state) {
     case NOT_BOTTOM:
-        if (joystick_p->x < BOTTOM_THRESHHOLD){
+        if (joystick_p->y < BOTTOM_THRESHHOLD){
             state = BOTTOM;
             output = true;
         }
         break;
-           case LEFT:
-               if (joystick_p->x > LEFT_THRESHHOLD){
-                   state = NOT_LEFT;
-                   output = false;
-               }
-break;
+    case BOTTOM:
+        if (joystick_p->y > BOTTOM_THRESHHOLD){
+            state = NOT_BOTTOM;
+            output = false;
+        }
+        break;
     }
 
-        return output;
+    return output;
 }
 
 
