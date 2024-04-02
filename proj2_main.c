@@ -30,6 +30,8 @@
 #define TOP_BOUND 50
 #define BOTTOM_BOUND 95
 
+#define DEFAULT_SCORE 0
+
 void Screen_manager(HAL *hal_p, Application *app_p);
 void Splash_screen(HAL *hal_p, Gamesettings *game);
 void Title_screen(HAL *hal_p, Gamesettings *game);
@@ -317,9 +319,9 @@ void Game_screenGraphics(HAL* hal_p, Gamesettings *game){
 }
 
 void ClearLivesDisplay(HAL* hal_p, const Graphics_Rectangle* area) {
-    Graphics_setForegroundColor(&hal_p->g_sContext, GRAPHICS_COLOR_BLACK); // Set this to your background color
+    Graphics_setForegroundColor(&hal_p->g_sContext, GRAPHICS_COLOR_BLACK);
     Graphics_fillRectangle(&hal_p->g_sContext, area);
-    Graphics_setForegroundColor(&hal_p->g_sContext, GRAPHICS_COLOR_WHITE); // Reset to default drawing color
+    Graphics_setForegroundColor(&hal_p->g_sContext, GRAPHICS_COLOR_WHITE);
 }
 
 void Player_movementLogic(HAL* hal_p, Gamesettings *game) {
@@ -359,7 +361,7 @@ void Draw_player(HAL *hal_p, Graphics_Rectangle *playerPos) {
     Graphics_fillRectangle(&hal_p->g_sContext, playerPos);
     Graphics_setForegroundColor(&hal_p->g_sContext, GRAPHICS_COLOR_WHITE);
 }
-
+//
 void Erase_player(HAL *hal_p, Graphics_Rectangle *playerPos) {
     Graphics_setForegroundColor(&hal_p->g_sContext, GRAPHICS_COLOR_BLACK);
     Graphics_drawRectangle(&hal_p->g_sContext, playerPos);
@@ -388,15 +390,13 @@ void UpdateAndDrawObstacles(HAL* hal_p, Gamesettings* game) {
     int i;
     for (i = 0; i < MAX_OBSTACLES; i++) {
         if (game->obstacles[i].isActive) {
-            // Temporarily store the old position
+
             Graphics_Rectangle oldRect = game->obstacles[i].rect;
 
-            // Update position
             game->obstacles[i].rect.xMin--;
             game->obstacles[i].rect.xMax--;
 
-            // Determine the part of the obstacle that needs to be erased
-            // Assuming the obstacle moves left, erase the rightmost part
+
             Graphics_Rectangle eraseRect = {
                 .xMin = oldRect.xMax - 1,
                 .xMax = oldRect.xMax,
@@ -404,17 +404,14 @@ void UpdateAndDrawObstacles(HAL* hal_p, Gamesettings* game) {
                 .yMax = oldRect.yMax,
             };
 
-            // Set foreground color to the background color to "erase"
             Graphics_setForegroundColor(&hal_p->g_sContext, GRAPHICS_COLOR_BLACK);
             Graphics_drawRectangle(&hal_p->g_sContext, &eraseRect);
 
-            // Draw the obstacle in its new position
             Graphics_setForegroundColor(&hal_p->g_sContext, GRAPHICS_COLOR_WHITE);
             Graphics_drawRectangle(&hal_p->g_sContext, &game->obstacles[i].rect);
 
-            // Deactivate obstacle if it moves off screen (simple example)
             if (game->obstacles[i].rect.xMax < 0) {
-                game->obstacles[i].isActive = false; // This obstacle is now off-screen, mark it inactive
+                game->obstacles[i].isActive = false;
             }
         }
     }
@@ -429,17 +426,16 @@ void SpawnObstacles(HAL* hal_p, Gamesettings* game) {
     static bool firstLoad = true;
     if (firstLoad) {
         game->timer = SWTimer_construct(SPAWN_OBSTACLE_COOLDOWN);
-        srand(time(NULL)); // Seed the random number generator
+        srand(time(NULL));
         firstLoad = false;
         SWTimer_start(&game->timer);
     }
 
     if (SWTimer_expired(&game->timer)) {
-        // Generate a random number between 0 and 2
+
         int randIndex = rand() % 3;
         Graphics_Rectangle newRect;
 
-        // Select one of the three rectangles based on the random number
         switch (randIndex) {
             case 0:
                 newRect = lowObstacleR1;
@@ -452,9 +448,8 @@ void SpawnObstacles(HAL* hal_p, Gamesettings* game) {
                 break;
         }
 
-        // Add the randomly selected obstacle
         AddObstacle(game, &newRect);
-        SWTimer_start(&game->timer); // Reset the timer
+        SWTimer_start(&game->timer);
     }
 }
 
@@ -465,10 +460,7 @@ void CheckAndHandleCollisions(HAL* hal_p, Gamesettings* game) {
             if (CheckCollision(&game->playerPos, &game->obstacles[i].rect)) {
                 game->obstacles[i].hasCollided = true; // Mark as collided
                 game->lives--;
-
-                // Do not reset player position
-                // Consider what happens to the obstacle after collision, if anything
-                break; // Process only one collision per frame
+                break;
             }
         }
     }
