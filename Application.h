@@ -10,6 +10,7 @@
 #define APPLICATION_H_
 
 #include <HAL/HAL.h>
+#define MAX_OBSTACLES 10
 
 typedef enum { splashScreen, mainMenuScreen, gameScreen, highScoresScreen, instructionsScreen} _screenState;
 
@@ -28,6 +29,9 @@ struct _Gamesettings {
     bool loadInstructionsScreen;
     bool loadHighScoresScreen;
     bool loadGameScreen;
+
+
+    SWTimer timer;
 
 
 };

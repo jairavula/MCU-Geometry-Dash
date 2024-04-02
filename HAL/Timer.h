@@ -16,6 +16,7 @@
 
 
 #define TITLE_SCREEN_WAIT   3000  //3 seconds
+#define SPAWN_OBSTACLE_COOLDOWN 1000 // 1 second
 
 // A globally-defined system clock variable. Changing this variable will change
 // the system clock across the ENTIRE BOARD. Any API calls which use the system

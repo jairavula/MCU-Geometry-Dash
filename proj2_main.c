@@ -40,6 +40,7 @@ void Draw_player(HAL *hal_p,Graphics_Rectangle *playerPos);
 void Erase_player(HAL *hal_p,Graphics_Rectangle *playerPos);
 void Player_movementLogic(HAL* hal_p);
 void Game_screenGraphics(HAL* hal_p, Gamesettings *game);
+void Spawn_obstacles(HAL* hal_p, Gamesettings* game, Graphics_Rectangle *rectanglePos);
 // Non-blocking check. Whenever Launchpad S1 is pressed, LED1 turns on.
 static void InitNonBlockingLED() {
     GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
@@ -240,6 +241,9 @@ void Game_screenGraphics(HAL* hal_p, Gamesettings *game){
     Graphics_Rectangle bar2 = {0, 50, 128, 50};
     Graphics_Rectangle bar3 = {0, 75, 128, 75};
     Graphics_Rectangle bar4 = {0, 100, 128, 100};
+    static Graphics_Rectangle lowObstacleR1 = {128, 99, 134, 89};
+    static Graphics_Rectangle lowObstacleR2 = {128, 75, 138, 65};
+    static Graphics_Rectangle lowObstacleR3 = {128, 50, 138, 40};
 
     static Graphics_Rectangle lives = {64, 110, 68, 114};
 
@@ -253,6 +257,8 @@ void Game_screenGraphics(HAL* hal_p, Gamesettings *game){
     Graphics_drawRectangle(&hal_p->g_sContext, &bar3);
     Graphics_drawRectangle(&hal_p->g_sContext, &bar4);
 
+    Spawn_obstacles(hal_p, game, &lowObstacleR1);
+
     for (i=0; i < MAX_LIVES; i++){
         Graphics_drawRectangle(&hal_p->g_sContext, &lives);
         lives.xMin += 10;
@@ -260,13 +266,6 @@ void Game_screenGraphics(HAL* hal_p, Gamesettings *game){
     }
     lives.xMin = 64;
     lives.xMax = 68;
-
-
-
-
-
-
-
 }
 
 void Player_movementLogic(HAL* hal_p){
@@ -323,6 +322,45 @@ void Erase_player(HAL *hal_p,Graphics_Rectangle *playerPos){
        Graphics_fillRectangle(&hal_p->g_sContext, playerPos);
        Graphics_setForegroundColor(&hal_p->g_sContext, GRAPHICS_COLOR_WHITE);
 }
+
+void Spawn_obstacles(HAL* hal_p, Gamesettings* game, Graphics_Rectangle *rectanglePos){
+    static int updateObstaclePos = 0;
+    static bool firstLoad = true;
+    static Graphics_Rectangle originalRectangle;
+
+
+    if (firstLoad){
+        game->timer = SWTimer_construct(SPAWN_OBSTACLE_COOLDOWN);
+        firstLoad = false;
+        originalRectangle.xMin = rectanglePos->xMin;
+                originalRectangle.yMin = rectanglePos->yMin;
+                originalRectangle.xMax = rectanglePos->xMax;
+                originalRectangle.yMax = rectanglePos->yMax;
+        SWTimer_start(&game->timer);
+
+    }
+    if (SWTimer_expired(&game->timer)){
+       Graphics_drawRectangle(&hal_p->g_sContext, rectanglePos);
+       SWTimer_start(&game->timer);
+       originalRectangle.xMin = rectanglePos->xMin;
+       originalRectangle.yMin = rectanglePos->yMin;
+       originalRectangle.xMax = rectanglePos->xMax;
+       originalRectangle.yMax = rectanglePos->yMax;
+    }
+    if (updateObstaclePos > 20){
+        Graphics_Rectangle eraseRectangle = {originalRectangle.xMax-1, originalRectangle.yMin, originalRectangle.xMax, originalRectangle.yMax};
+        originalRectangle.xMin--;
+        originalRectangle.xMax--;
+        Graphics_drawRectangle(&hal_p->g_sContext, &originalRectangle);
+        Graphics_setForegroundColor(&hal_p->g_sContext, GRAPHICS_COLOR_BLACK);
+        Graphics_drawRectangle(&hal_p->g_sContext, &eraseRectangle);
+        Graphics_setForegroundColor(&hal_p->g_sContext, GRAPHICS_COLOR_WHITE);
+    }
+    updateObstaclePos++;
+}
+
+
+
 
 
 
