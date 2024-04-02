@@ -12,7 +12,13 @@
 #include <HAL/HAL.h>
 #define MAX_OBSTACLES 10
 
-typedef enum { splashScreen, mainMenuScreen, gameScreen, highScoresScreen, instructionsScreen} _screenState;
+typedef enum { splashScreen, mainMenuScreen, gameScreen, highScoresScreen, instructionsScreen, gameOverScreen} _screenState;
+
+
+typedef struct _Gamesettings Gamesettings;
+typedef struct _Application Application;
+typedef struct _Rectangle Rectangle;
+typedef struct _Obstacle Obstacle;
 
 struct _Application {
   // Put your application members and FSM state variables here!
@@ -22,6 +28,12 @@ struct _Application {
   SWTimer timer;
 };
 
+struct _Obstacle{
+    Graphics_Rectangle rect;
+    bool isActive;
+    bool hasCollided;
+};
+
 struct _Gamesettings {
     _screenState screenState;
 
@@ -29,12 +41,20 @@ struct _Gamesettings {
     bool loadInstructionsScreen;
     bool loadHighScoresScreen;
     bool loadGameScreen;
+    bool loadGameOverScreen;
+
+    Graphics_Rectangle playerPos;
+    Graphics_Rectangle lastPlayerPos;
+    int lives;
+    int currentScore;
 
 
     SWTimer timer;
-
+    int numObstacles;
+    Obstacle obstacles[MAX_OBSTACLES];
 
 };
+
 
 struct _Rectangle{
     int r11;
@@ -43,9 +63,7 @@ struct _Rectangle{
     int r22;
 };
 
-typedef struct _Gamesettings Gamesettings;
-typedef struct _Application Application;
-typedef struct _Rectangle Rectangle;
+
 
 // Called only a single time - inside of main(), where the application is
 // constructed
