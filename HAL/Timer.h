@@ -17,6 +17,10 @@
 
 #define TITLE_SCREEN_WAIT   3000  //3 seconds
 #define SPAWN_OBSTACLE_COOLDOWN 1000 // 1 second
+#define SPAWN_OBSTACLE_COOLDOWN_FAST 800
+#define SPAWN_OBSTACLE_COOLDOWN_FASTEST 500
+
+#define ADD_SCORE_TIME 1000
 
 // A globally-defined system clock variable. Changing this variable will change
 // the system clock across the ENTIRE BOARD. Any API calls which use the system

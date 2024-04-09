@@ -11,8 +11,15 @@
 
 #include <HAL/HAL.h>
 #define MAX_OBSTACLES 10
+#define MAX_HIGH_SCORES 3
 
 typedef enum { splashScreen, mainMenuScreen, gameScreen, highScoresScreen, instructionsScreen, gameOverScreen} _screenState;
+typedef enum {
+    GROUND,
+    ASCENDING,
+    PEAK,
+    DESCENDING
+} PlayerState;
 
 
 typedef struct _Gamesettings Gamesettings;
@@ -34,6 +41,7 @@ struct _Obstacle{
     bool hasCollided;
 };
 
+
 struct _Gamesettings {
     _screenState screenState;
 
@@ -47,9 +55,11 @@ struct _Gamesettings {
     Graphics_Rectangle lastPlayerPos;
     int lives;
     int currentScore;
+    int highScores[MAX_HIGH_SCORES];
 
 
     SWTimer timer;
+    SWTimer scoreTimer;
     int numObstacles;
     Obstacle obstacles[MAX_OBSTACLES];
 
