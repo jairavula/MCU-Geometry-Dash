@@ -52,7 +52,7 @@ void UpdateAndDrawObstacles(HAL* hal_p, Gamesettings* game);
 bool CheckCollision(Graphics_Rectangle* playerRect, Graphics_Rectangle* obstacleRect);
 void CheckAndHandleCollisions(HAL* hal_p, Gamesettings* game);
 void Game_overScreen(HAL* hal_p, Gamesettings* game);
-void Player_jumpLogic(HAL* hal_p, Gamesettings *game);
+void Player_jumpLogic(HAL* hal_p, Gamesettings *game, PlayerState *currentState);
 void UpdateHighScores(Gamesettings *game);
 // Non-blocking check. Whenever Launchpad S1 is pressed, LED1 turns on.
 static void InitNonBlockingLED() {
@@ -105,11 +105,19 @@ void Application_loop(Application *app_p, HAL *hal_p)
 {
     // Entire game is handled by the screen manager
     Screen_manager(hal_p, app_p);
+
+
 }
 
 void Screen_manager(HAL *hal_p, Application *app_p)
 { // Initializes the game settings for a new game
-    static Gamesettings game = {splashScreen, false, false, false, false, false, {50, 45, 55, 50},{50, 45, 55, 50}, 3, 0,{0} };
+   static Gamesettings game = {splashScreen, false, false, false, false, false, {50, 45, 55, 50},{50, 45, 55, 50}, 3, 0,{0} };
+
+   int joystickInput = ((hal_p->joystick.x << 4) | (hal_p->joystick.y)) & 0xFF; // Combine and reduce the joystick inputs
+   game.randADC ^= joystickInput; // XOR with the joystick input to introduce variability
+   game.randADC = (game.randADC << 5) | (game.randADC >> (32 - 5)); // Rotate left by 5 bits (for a 32-bit number)
+   game.randADC ^= joystickInput; // XOR again to mix in more of the joystick input
+
     switch (game.screenState) // FSM logic for each screen setting
     {
     // entry point of game, leads to game settings or instructions screen through button taps
@@ -174,6 +182,8 @@ void Splash_screen(HAL *hal_p, Gamesettings *game){
     Graphics_drawString(&hal_p->g_sContext, (int8_t*) "ECE Surfers", -1, 5, 13, true);
     Graphics_drawString(&hal_p->g_sContext, (int8_t*) "Jai Ravula", -1, 5, 21, true);
 
+
+
 }
 
 void Title_screen(HAL *hal_p, Gamesettings *game){
@@ -191,7 +201,7 @@ void Title_screen(HAL *hal_p, Gamesettings *game){
         Graphics_drawString(&hal_p->g_sContext, (int8_t*) "Play ECE Surfers", -1, 5, 5, true);
          Graphics_drawString(&hal_p->g_sContext, (int8_t*) "Instructions", -1, 5, 13, true);
          Graphics_drawString(&hal_p->g_sContext, (int8_t*) "View High Scores", -1, 5, 21, true);
-         Graphics_drawString(&hal_p->g_sContext, (int8_t*) "x", -1, 115, 13 , true);
+         Graphics_drawString(&hal_p->g_sContext, (int8_t*) "x", -1, 115, cursorPos , true);
          game->loadTitleScreen = false;
     }
 
@@ -221,19 +231,19 @@ void Title_screen(HAL *hal_p, Gamesettings *game){
         joystickTimer = 0;
     }
 
-    if(Button_isPressed(&hal_p->boosterpackJS) && cursorPos == TITLE_SCREEN_PLAY_CURSOR_POS && joystickTimer > JOYSTICK_COOLDOWN){
+    if(Button_isTapped(&hal_p->boosterpackJS) && cursorPos == TITLE_SCREEN_PLAY_CURSOR_POS && joystickTimer > JOYSTICK_COOLDOWN){
         game->loadGameScreen = true;
-       // game->loadTitleScreen = false;
+        game->loadTitleScreen = false;
         joystickTimer = 0;
     }
-    if(Button_isPressed(&hal_p->boosterpackJS) && cursorPos == TITLE_SCREEN_INSTRUCTIONS_CURSOR_POS && joystickTimer > JOYSTICK_COOLDOWN){
+    if(Button_isTapped(&hal_p->boosterpackJS) && cursorPos == TITLE_SCREEN_INSTRUCTIONS_CURSOR_POS && joystickTimer > JOYSTICK_COOLDOWN){
         game->loadInstructionsScreen = true;
-       // game->loadTitleScreen = false;
+        game->loadTitleScreen = false;
         joystickTimer = 0;
     }
-    if(Button_isPressed(&hal_p->boosterpackJS) && cursorPos == TITLE_SCREEN_SCORES_CURSOR_POS && joystickTimer > JOYSTICK_COOLDOWN){
+    if(Button_isTapped(&hal_p->boosterpackJS) && cursorPos == TITLE_SCREEN_SCORES_CURSOR_POS && joystickTimer > JOYSTICK_COOLDOWN){
         game->loadHighScoresScreen = true;
-       // game->loadTitleScreen = false;
+        game->loadTitleScreen = false;
         joystickTimer = 0;
     }
     joystickTimer++;
@@ -243,7 +253,7 @@ void Instructions_screen(HAL* hal_p, Gamesettings* game){
     static int buttonTimer = 0;
     Graphics_drawString(&hal_p->g_sContext, (int8_t*) "INSTRUCTIONS SCREEN", -1, 5, 5, true);
 
-    if(Button_isPressed(&hal_p->boosterpackJS) && buttonTimer > JOYSTICK_COOLDOWN){
+    if(Button_isTapped(&hal_p->boosterpackJS) && buttonTimer > JOYSTICK_COOLDOWN){
         game->loadInstructionsScreen = false;
         game->loadTitleScreen = true;
         buttonTimer = 0;
@@ -267,7 +277,7 @@ void Highscores_screen(HAL* hal_p, Gamesettings* game) {
     }
 
     // Button logic to return to the main menu
-    if (Button_isPressed(&hal_p->boosterpackJS) && buttonTimer > JOYSTICK_COOLDOWN) {
+    if (Button_isTapped(&hal_p->boosterpackJS) && buttonTimer > JOYSTICK_COOLDOWN) {
         game->loadHighScoresScreen = false;
         game->loadTitleScreen = true;
         buttonTimer = 0;
@@ -386,46 +396,62 @@ void ClearLivesDisplay(HAL* hal_p, const Graphics_Rectangle* area) {
 }
 
 void Player_movementLogic(HAL* hal_p, Gamesettings *game) {
+    static PlayerState currentState = GROUND;
+
+
+    if (hal_p->joystick.isTiltToRight && game->playerPos.xMax < RIGHT_BOUND) {
+           game->playerPos.xMin++;
+           game->playerPos.xMax++;
+           Erase_player(hal_p, &game->lastPlayerPos);
+           Draw_player(hal_p, &game->playerPos);
+           game->lastPlayerPos = game->playerPos;
+       }
+    if (hal_p->joystick.isTiltToLeft && game->playerPos.xMin > LEFT_BOUND) {
+            game->playerPos.xMin--;
+            game->playerPos.xMax--;
+            Erase_player(hal_p, &game->lastPlayerPos);
+            Draw_player(hal_p, &game->playerPos);
+            game->lastPlayerPos = game->playerPos;
+        }
     if (hal_p->joystick.isPressedToRight && game->playerPos.xMax < RIGHT_BOUND) {
-        game->playerPos.xMin++;
-        game->playerPos.xMax++;
+        game->playerPos.xMin+=2;
+        game->playerPos.xMax+=2;
         Erase_player(hal_p, &game->lastPlayerPos);
         Draw_player(hal_p, &game->playerPos);
         game->lastPlayerPos = game->playerPos;
     }
     if (hal_p->joystick.isPressedToLeft && game->playerPos.xMin > LEFT_BOUND) {
-        game->playerPos.xMin--;
-        game->playerPos.xMax--;
+        game->playerPos.xMin-=2;
+        game->playerPos.xMax-=2;
         Erase_player(hal_p, &game->lastPlayerPos);
         Draw_player(hal_p, &game->playerPos);
         game->lastPlayerPos = game->playerPos;
     }
-    if (hal_p->joystick.isTappedToTop && game->playerPos.yMin > TOP_BOUND) {
+    if (hal_p->joystick.isTappedToTop && game->playerPos.yMin > TOP_BOUND && currentState == GROUND) {
         game->playerPos.yMin -= 25;
         game->playerPos.yMax -= 25;
         Erase_player(hal_p, &game->lastPlayerPos);
         Draw_player(hal_p, &game->playerPos);
         game->lastPlayerPos = game->playerPos;
     }
-    if (hal_p->joystick.isTappedToBottom && game->playerPos.yMin < BOTTOM_BOUND) {
+    if (hal_p->joystick.isTappedToBottom && game->playerPos.yMin < BOTTOM_BOUND && currentState == GROUND) {
         game->playerPos.yMin += 25;
         game->playerPos.yMax += 25;
         Erase_player(hal_p, &game->lastPlayerPos);
         Draw_player(hal_p, &game->playerPos);
         game->lastPlayerPos = game->playerPos;
     }
-    Player_jumpLogic(hal_p, game);
+    Player_jumpLogic(hal_p, game, &currentState);
 }
 
-void Player_jumpLogic(HAL* hal_p, Gamesettings *game) {
-    static PlayerState currentState = GROUND;
+void Player_jumpLogic(HAL* hal_p, Gamesettings *game, PlayerState * currentState) {
     static int ascentHeight = 0;
 
-    switch (currentState) {
+    switch (*currentState) {
         case GROUND:
             // Check if button 1 is pressed to start the jump
             if (Button_isPressed(&hal_p->boosterpackS1)) {
-                currentState = ASCENDING;
+                *currentState = ASCENDING;
             }
             break;
 
@@ -435,12 +461,12 @@ void Player_jumpLogic(HAL* hal_p, Gamesettings *game) {
                 game->playerPos.yMax--;
                 ascentHeight++;
             } else {
-                currentState = PEAK;
+                *currentState = PEAK;
             }
             break;
 
         case PEAK:
-            currentState = DESCENDING;
+            *currentState = DESCENDING;
             break;
 
         case DESCENDING:
@@ -452,7 +478,7 @@ void Player_jumpLogic(HAL* hal_p, Gamesettings *game) {
                 Erase_player(hal_p, &game->lastPlayerPos);
                 Draw_player(hal_p, &game->playerPos);
                 game->lastPlayerPos = game->playerPos;
-                currentState = GROUND;
+                *currentState = GROUND;
             }
             break;
     }
@@ -541,16 +567,18 @@ void SpawnObstacles(HAL* hal_p, Gamesettings* game) {
     static Graphics_Rectangle fullObstacleR2 = {128, 51, 134, 74};  // Middle row
     static Graphics_Rectangle fullObstacleR3 = {128, 26, 134, 49};  // Top row
 
+
+
+
     static bool firstLoad = true;
     if (firstLoad) {
         game->timer = SWTimer_construct(SPAWN_OBSTACLE_COOLDOWN);
-        srand(time(NULL)); // Seed the random number generator
         firstLoad = false;
         SWTimer_start(&game->timer);
     }
 
     if (SWTimer_expired(&game->timer)) {
-        int randIndex = rand() % 9; // Now randomizing among 9 options
+        int randIndex = game->randADC % 9; // Now randomizing among 9 options
         Graphics_Rectangle newRect;
 
         // Determine the obstacle based on randIndex
@@ -568,7 +596,12 @@ void SpawnObstacles(HAL* hal_p, Gamesettings* game) {
 
         AddObstacle(game, &newRect);
 
-        if(game->currentScore > 10000 && game->currentScore < 25000){
+        if(game->currentScore < 10000){
+           game->timer = SWTimer_construct(SPAWN_OBSTACLE_COOLDOWN);
+           SWTimer_start(&game->timer); // Reset the timer
+        }
+
+        else if(game->currentScore > 10000 && game->currentScore < 25000){
             game->timer = SWTimer_construct(SPAWN_OBSTACLE_COOLDOWN_FAST);
             SWTimer_start(&game->timer); // Reset the timer
         }
@@ -588,9 +621,18 @@ void CheckAndHandleCollisions(HAL* hal_p, Gamesettings* game) {
     for (i = 0; i < MAX_OBSTACLES; i++) {
         if (game->obstacles[i].isActive && !game->obstacles[i].hasCollided) {
             if (CheckCollision(&game->playerPos, &game->obstacles[i].rect)) {
+
+                Graphics_Rectangle eraseAnimation = {game->playerPos.xMax, game->playerPos.yMin+14, game->playerPos.xMax+24, game->playerPos.yMin-14};
                 game->obstacles[i].hasCollided = true; // Mark as collided
                 game->lives--;
-                Graphics_drawImage(&hal_p->g_sContext, &explosion8BPP_UNCOMP, game->playerPos.xMin, game->playerPos.yMin - 16);
+                for (i = 0; i< 50; i++){
+                    Graphics_drawImage(&hal_p->g_sContext, &explosion8BPP_UNCOMP, game->playerPos.xMin, game->playerPos.yMin - 16);
+
+                }
+                Graphics_setForegroundColor(&hal_p->g_sContext, GRAPHICS_COLOR_BLACK);
+                Graphics_fillRectangle(&hal_p->g_sContext, &eraseAnimation);
+                Graphics_setForegroundColor(&hal_p->g_sContext, GRAPHICS_COLOR_WHITE);
+
                 break;
             }
         }

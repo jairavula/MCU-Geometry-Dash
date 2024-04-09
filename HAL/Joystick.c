@@ -10,8 +10,10 @@
 
 #include <HAL/Joystick.h>
 
-#define LEFT_THRESHHOLD 3000
-#define RIGHT_THRESHHOLD 13000
+#define PRESSED_LEFT_THRESHHOLD 2000
+#define PRESSED_RIGHT_THRESHHOLD 14000
+#define TILT_LEFT_THRESHHOLD 6000
+#define TILT_RIGHT_THRESHHOLD 10000
 #define TOP_THRESHHOLD 13000
 #define BOTTOM_THRESHHOLD 3000
 
@@ -128,17 +130,32 @@ void Joystick_refresh(Joystick* joystick_p){
     joystick_p->isPressedToLeft = Joystick_isPressedtoLeft(joystick_p);
     joystick_p->isPressedToRight = Joystick_isPressedtoRight(joystick_p);
 
+    joystick_p->isTiltToLeft = Joystick_isTiltToLeft(joystick_p);
+    joystick_p->isTiltToRight = Joystick_isTiltToRight(joystick_p);
 
 
 
 }
 
 bool Joystick_isPressedtoLeft(Joystick* joystick_p){
-    return (joystick_p->x < LEFT_THRESHHOLD);
+    return (joystick_p->x < PRESSED_LEFT_THRESHHOLD);
 }
 bool Joystick_isPressedtoRight(Joystick* joystick_p){
-    return (joystick_p->x > RIGHT_THRESHHOLD);
+    return (joystick_p->x > PRESSED_RIGHT_THRESHHOLD);
 }
+
+bool Joystick_isTiltToLeft(Joystick* joystick_p){
+    return (joystick_p->x < TILT_LEFT_THRESHHOLD && joystick_p->x > PRESSED_LEFT_THRESHHOLD);
+}
+
+bool Joystick_isTiltToRight(Joystick* joystick_p){
+    return (joystick_p->x > TILT_RIGHT_THRESHHOLD && joystick_p->x < PRESSED_RIGHT_THRESHHOLD);
+}
+
+
+
+
+
 bool Joystick_isPressedtoTop(Joystick* joystick_p){
     return (joystick_p->y > TOP_THRESHHOLD);
 }
@@ -151,13 +168,13 @@ bool Joystick_isTappedToLeft(Joystick* joystick_p){
 
     switch(state) {
     case NOT_LEFT:
-        if (joystick_p->x < LEFT_THRESHHOLD){
+        if (joystick_p->x < PRESSED_LEFT_THRESHHOLD){
             state = LEFT;
             output = true;
         }
         break;
     case LEFT:
-        if (joystick_p->x > LEFT_THRESHHOLD){
+        if (joystick_p->x > PRESSED_LEFT_THRESHHOLD){
             state = NOT_LEFT;
             output = false;
         }
@@ -173,13 +190,13 @@ bool Joystick_isTappedToRight(Joystick* joystick_p){
 
     switch(state) {
     case NOT_RIGHT:
-        if (joystick_p->x > RIGHT_THRESHHOLD){
+        if (joystick_p->x > PRESSED_RIGHT_THRESHHOLD){
             state = RIGHT;
             output = true;
         }
         break;
     case RIGHT:
-        if (joystick_p->x < RIGHT_THRESHHOLD){
+        if (joystick_p->x < PRESSED_RIGHT_THRESHHOLD){
             state = NOT_RIGHT;
             output = false;
         }

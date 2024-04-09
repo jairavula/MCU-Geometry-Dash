@@ -63,6 +63,8 @@ struct _Gamesettings {
     int numObstacles;
     Obstacle obstacles[MAX_OBSTACLES];
 
+    unsigned int randADC;
+
 };
 
 

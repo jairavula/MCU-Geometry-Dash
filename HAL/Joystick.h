@@ -26,6 +26,9 @@ struct _Joystick {
     bool isPressedToTop;
     bool isPressedToBottom;
 
+    bool isTiltToRight;
+    bool isTiltToLeft;
+
 
 };
 typedef struct _Joystick Joystick;
@@ -51,6 +54,10 @@ bool Joystick_isTappedToBottom(Joystick* Joystick);
 bool Joystick_isTappedToRight(Joystick* Joystick);
 
 bool Joystick_isTappedToLeft(Joystick* Joystick);
+
+bool Joystick_isTiltToLeft(Joystick* joystick_p);
+
+bool Joystick_isTiltToRight(Joystick* joystick_p);
 
 /** Refreshes this Joystick so the Joystick FSM now has new outputs to interpret */
 void Joystick_refresh(Joystick* Joystick);
