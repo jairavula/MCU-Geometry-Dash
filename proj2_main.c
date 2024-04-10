@@ -32,6 +32,9 @@
 #define BOTTOM_BOUND 95
 
 #define DEFAULT_SCORE 0
+
+#define SCORE_CHECKPOINT1 10000
+#define SCORE_CHECKPOINT2 25000
  // image data structure
 extern const Graphics_Image explosion8BPP_UNCOMP;
 extern const Graphics_Image titleScreen8BPP_UNCOMP;
@@ -626,12 +629,12 @@ void SpawnObstacles(HAL* hal_p, Gamesettings* game) {
 
         AddObstacle(game, &newRect); // add the obstacle to the game
 
-        if(game->currentScore < 10000){ // lowest spawn setting
+        if(game->currentScore < SCORE_CHECKPOINT1){ // lowest spawn setting
            game->timer = SWTimer_construct(SPAWN_OBSTACLE_COOLDOWN);
            SWTimer_start(&game->timer); // Reset the timer
         }
 
-        else if(game->currentScore > 10000 && game->currentScore < 25000){ // faster spawn setting
+        else if(game->currentScore > SCORE_CHECKPOINT1 && game->currentScore < SCORE_CHECKPOINT2){ // faster spawn setting
             game->timer = SWTimer_construct(SPAWN_OBSTACLE_COOLDOWN_FAST);
             SWTimer_start(&game->timer); // Reset the timer
         }
