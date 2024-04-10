@@ -136,7 +136,7 @@ void Joystick_refresh(Joystick* joystick_p){
 
 
 }
-
+// checks if joystick is fully pressed or tilted
 bool Joystick_isPressedtoLeft(Joystick* joystick_p){
     return (joystick_p->x < PRESSED_LEFT_THRESHHOLD);
 }
@@ -155,27 +155,28 @@ bool Joystick_isTiltToRight(Joystick* joystick_p){
 
 
 
-
+// same thing for top
 bool Joystick_isPressedtoTop(Joystick* joystick_p){
     return (joystick_p->y > TOP_THRESHHOLD);
 }
 bool Joystick_isPressedtoBottom(Joystick* joystick_p){
     return (joystick_p->y < BOTTOM_THRESHHOLD);
 }
+// debounce mechanism of joystick
 bool Joystick_isTappedToLeft(Joystick* joystick_p){
     static JoystickDebounceStateLeft state = NOT_LEFT;
     bool output = false;
 
     switch(state) {
-    case NOT_LEFT:
+    case NOT_LEFT: // not in left range
         if (joystick_p->x < PRESSED_LEFT_THRESHHOLD){
-            state = LEFT;
+            state = LEFT;// change
             output = true;
         }
         break;
-    case LEFT:
+    case LEFT: // in left range
         if (joystick_p->x > PRESSED_LEFT_THRESHHOLD){
-            state = NOT_LEFT;
+            state = NOT_LEFT;// change
             output = false;
         }
         break;
@@ -183,7 +184,7 @@ bool Joystick_isTappedToLeft(Joystick* joystick_p){
 
     return output;
 }
-
+// same as above
 bool Joystick_isTappedToRight(Joystick* joystick_p){
     static JoystickDebounceStateRight state = NOT_RIGHT;
     bool output = false;
@@ -205,7 +206,7 @@ bool Joystick_isTappedToRight(Joystick* joystick_p){
 
     return output;
 }
-
+// same as above, but for top
 bool Joystick_isTappedToTop(Joystick* joystick_p){
     static JoystickDebounceStateTop state = NOT_TOP;
     bool output = false;
@@ -227,7 +228,7 @@ bool Joystick_isTappedToTop(Joystick* joystick_p){
 
     return output;
 }
-
+// same thing
 bool Joystick_isTappedToBottom(Joystick* joystick_p){
     static JoystickDebounceStateBottom state = NOT_BOTTOM;
     bool output = false;
