@@ -258,7 +258,7 @@ void Instructions_screen(HAL* hal_p, Gamesettings* game){
     static int buttonTimer = 0; // debounce variable
 
     if (game->loadInstructionsScreen){ // Load graphics only once
-        Graphics_drawString(&hal_p->g_sContext, (int8_t*) "HOW TO PLAY", -1, 5, 5, true);
+      /*  Graphics_drawString(&hal_p->g_sContext, (int8_t*) "HOW TO PLAY", -1, 5, 5, true);
         Graphics_drawString(&hal_p->g_sContext, (int8_t*) "Avoid all the ", -1, 5, 13, true);
         Graphics_drawString(&hal_p->g_sContext, (int8_t*) "obstacles, move left ", -1, 5, 21, true);
         Graphics_drawString(&hal_p->g_sContext, (int8_t*) "or right, up a lane", -1, 5, 29, true);
@@ -270,7 +270,36 @@ void Instructions_screen(HAL* hal_p, Gamesettings* game){
         Graphics_drawString(&hal_p->g_sContext, (int8_t*) "score! Move Joystick ", -1, 5, 78, true);
         Graphics_drawString(&hal_p->g_sContext, (int8_t*) "to move", -1, 5, 86, true);
         Graphics_drawString(&hal_p->g_sContext, (int8_t*) "Press BB1 to jump", -1, 5, 94, true);
-        game->loadInstructionsScreen = false;
+        */
+        Graphics_drawString(&hal_p->g_sContext, (int8_t*) "Trial Config", -1, 5, 5, true);
+        Graphics_drawString(&hal_p->g_sContext, (int8_t*) "# of Trials:  ", -1, 5, 20, true);
+        Graphics_drawString(&hal_p->g_sContext, (int8_t*) "Trial 1:       sec ", -1, 5, 40, true);
+        Graphics_drawString(&hal_p->g_sContext, (int8_t*) "Trial 2:       sec ", -1, 5, 48, true);
+        Graphics_drawString(&hal_p->g_sContext, (int8_t*) "Trial 3:       sec ", -1, 5, 56, true);
+        Graphics_drawString(&hal_p->g_sContext, (int8_t*) "Tap BB2 to begin. ", -1, 5, 115, true);
+
+        static int trials = 1;
+        char trialsStr[4];
+        if(Button_isTapped(&hal_p->launchpadS1) && trials > 1){
+            trials--;
+            sprintf(trialsStr, "%d", trials);
+            Graphics_drawString(&hal_p->g_sContext, (int8_t*) "  ", -1, 90, 20, true);
+            Graphics_drawString(&hal_p->g_sContext, (int8_t*) trialsStr, -1, 90, 20, true);
+        }
+        if(Button_isTapped(&hal_p->launchpadS2) && trials < 3){
+                   trials++;
+                   sprintf(trialsStr, "%d", trials);
+                   Graphics_drawString(&hal_p->g_sContext, (int8_t*) "  ", -1, 90, 20, true);
+                   Graphics_drawString(&hal_p->g_sContext, (int8_t*) trialsStr, -1, 90, 20, true);
+               }
+        if(Button_isTapped(&hal_p->boosterpackS2)){
+            Graphics_drawString(&hal_p->g_sContext, (int8_t*) "             ", -1, 5, 5, true);
+            Graphics_drawString(&hal_p->g_sContext, (int8_t*) "Testing", -1, 5, 5, true);
+            Graphics_drawString(&hal_p->g_sContext, (int8_t*) "React to LED w/ BB1. ", -1, 5, 115, true);
+
+        }
+
+
     }
 
 
